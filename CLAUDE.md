@@ -105,9 +105,8 @@ See `.env.example`. Key variables (prefixed with `NUXT_` in docker-compose):
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | PostgreSQL connection string |
+| `POSTGRES_PASSWORD` | PostgreSQL password (used by docker-compose) |
 | `JWT_SECRET` | Secret for signing JWT tokens |
-| `UPLOAD_DIR` | File upload directory (default `./uploads`) |
 | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | Seed admin account credentials |
 | `SMTP_HOST/PORT/USER/PASS/FROM` | Email sending configuration |
 | `NUXT_PUBLIC_SMTP_ENABLED` | Enable email features (`true`/`false`) |
