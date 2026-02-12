@@ -65,3 +65,7 @@ SMTP_FROM=noreply@ditdomaene.dk
 ## Miljøvariabler
 
 Se `.env.example` for alle tilgængelige variabler.
+
+---
+
+`opslagstavle` `dokumentarkiv` `kalender` `brugerstyring` `rollebaseret adgang` `passkeys` `magic links` `RSVP` `ICS-feed` `e-mail-notifikationer` `påmindelser` `markdown` `PDF-upload` `automatisk backup` `foreningsportal` `selvhostet`
