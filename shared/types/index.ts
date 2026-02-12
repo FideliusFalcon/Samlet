@@ -21,8 +21,20 @@ export interface BoardPost {
   title: string
   content: string
   isPinned: boolean
+  commentsEnabled: boolean
   authorId: string
   authorName?: string
+  commentCount?: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface BoardComment {
+  id: string
+  postId: string
+  authorId: string
+  authorName?: string
+  content: string
   createdAt: string
   updatedAt: string
 }

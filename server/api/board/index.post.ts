@@ -4,7 +4,7 @@ export default defineEventHandler(async (event) => {
   const user = requireRole(event, ['write-board'])
   const db = useDb()
 
-  const { title, content, isPinned, skipNotification } = await readBody(event)
+  const { title, content, isPinned, skipNotification, commentsEnabled } = await readBody(event)
 
   if (!title?.trim() || !content?.trim()) {
     throw createError({ statusCode: 400, message: 'Titel og indhold er påkrævet' })
@@ -18,6 +18,7 @@ export default defineEventHandler(async (event) => {
     title: title.trim(),
     content: content.trim(),
     isPinned: isPinned || false,
+    commentsEnabled: commentsEnabled !== false,
     authorId: user.id,
   }).returning()
 

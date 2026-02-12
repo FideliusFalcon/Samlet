@@ -117,6 +117,7 @@ const props = withDefaults(defineProps<{
   rows?: number
   required?: boolean
   placeholder?: string
+  previewRenderer?: (content: string) => string
 }>(), {
   rows: 6,
   required: false,
@@ -131,7 +132,7 @@ const modKey = import.meta.client && navigator?.userAgent?.includes('Mac') ? 'âŒ
 
 const previewHtml = computed(() => {
   if (!previewMode.value || !modelValue.value) return '<p class="text-gray-400">Intet indhold at vise.</p>'
-  return renderMarkdown(modelValue.value)
+  return props.previewRenderer ? props.previewRenderer(modelValue.value) : renderMarkdown(modelValue.value)
 })
 
 function handleKeydown(e: KeyboardEvent) {
@@ -273,5 +274,5 @@ function insertAtCursor(textToInsert: string) {
   })
 }
 
-defineExpose({ insertAtCursor })
+defineExpose({ insertAtCursor, textarea })
 </script>

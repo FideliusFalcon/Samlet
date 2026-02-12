@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer'
 import type { Transporter } from 'nodemailer'
 import { eq, ne, and, inArray } from 'drizzle-orm'
-import { users, auditLogs, documents, calendarEvents, userRoles, roles, eventResponses } from '~~/server/db/schema'
+import { users, auditLogs, documents, calendarEvents, userRoles, roles, eventResponses, boardComments } from '~~/server/db/schema'
 import { renderMarkdown } from '~~/shared/utils/markdown'
 import { notifyWebhook } from '~~/server/utils/webhook'
 
@@ -132,6 +132,7 @@ export async function notifyNewBoardPost(
 
   // Render markdown and resolve references for HTML email
   const previewWithLinks = rawPreview
+    .replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/gi, '**@$1**')
     .replace(/\[\[doc:([0-9a-f-]{36})\]\]/gi, (_match, id) => {
       const title = docTitleMap.get(id) || 'Dokument'
       return `[${title}](${config.baseUrl}/documents/${id})`
@@ -143,6 +144,7 @@ export async function notifyNewBoardPost(
   const previewHtml = markdownToEmailHtml(previewWithLinks)
 
   const previewText = rawPreview
+    .replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/gi, '@$1')
     .replace(/\[\[doc:([0-9a-f-]{36})\]\]/gi, (_match, id) => {
       const title = docTitleMap.get(id) || 'Dokument'
       return `${title} (${config.baseUrl}/documents/${id})`
@@ -212,6 +214,126 @@ Afmeld notifikationer: ${settingsUrl}`
       details: `"${post.title}": ${message}`,
     }).execute().catch(() => {})
     notifyWebhook('email/board-post', message, `Post: "${post.title}"`).catch(() => {})
+    throw err
+  }
+}
+
+export async function notifyNewBoardComment(
+  post: { id: string; title: string; authorId: string },
+  comment: { id: string; content: string },
+  commenterName: string,
+  commenterId: string,
+) {
+  const transport = getTransporter()
+  if (!transport) return
+
+  const db = useDb()
+  const config = useRuntimeConfig()
+  const appName = config.public.appName
+
+  // Collect recipient user IDs: post author + previous commenters + mentioned users
+  const recipientIds = new Set<string>()
+
+  if (post.authorId !== commenterId) {
+    recipientIds.add(post.authorId)
+  }
+
+  const previousCommenters = await db
+    .selectDistinct({ authorId: boardComments.authorId })
+    .from(boardComments)
+    .where(and(eq(boardComments.postId, post.id), ne(boardComments.authorId, commenterId)))
+
+  for (const c of previousCommenters) {
+    recipientIds.add(c.authorId)
+  }
+
+  // Add @mentioned users from comment content
+  const mentionedIds = [...comment.content.matchAll(/@\[([^\]]+)\]\(([0-9a-f-]{36})\)/gi)].map(m => m[2])
+  for (const id of mentionedIds) {
+    if (id !== commenterId) {
+      recipientIds.add(id)
+    }
+  }
+
+  if (recipientIds.size === 0) return
+
+  const recipientUsers = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(and(
+      eq(users.isActive, true),
+      eq(users.notificationsEnabled, true),
+      inArray(users.id, [...recipientIds]),
+    ))
+
+  const emails = recipientUsers.map(u => u.email)
+  if (!emails.length) return
+
+  const boardUrl = `${config.baseUrl}/board`
+  const settingsUrl = `${config.baseUrl}/settings`
+
+  // Clean up @[Name](userId) mentions to just @Name for email preview
+  const cleanContent = comment.content.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/gi, '@$1')
+  const preview = cleanContent.length > 300
+    ? cleanContent.slice(0, 300) + '...'
+    : cleanContent
+
+  const html = `<!DOCTYPE html>
+<html lang="da">
+<head><meta charset="utf-8" /></head>
+<body style="margin: 0; padding: 0; background-color: #f9fafb;">
+  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <h2 style="color: #1f2937; margin-bottom: 4px;">${escapeHtml(appName)}</h2>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 12px 0;" />
+    <p style="color: #6b7280; font-size: 14px;">Ny kommentar af ${escapeHtml(commenterName)}</p>
+    <h3 style="color: #111827; margin-bottom: 8px;">${escapeHtml(post.title)}</h3>
+    <div style="color: #374151; font-size: 14px; line-height: 1.6; white-space: pre-wrap; background-color: #f3f4f6; padding: 12px; border-radius: 8px;">${escapeHtml(preview)}</div>
+    <p style="margin: 16px 0;">
+      <a href="${boardUrl}" style="display: inline-block; padding: 10px 20px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 6px; font-size: 14px; font-weight: 500;">Gå til opslagstavlen</a>
+    </p>
+    <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 16px 0;" />
+    <p style="color: #9ca3af; font-size: 12px;">
+      Du modtager denne e-mail fordi du har kommenteret eller oprettet dette opslag.
+      <a href="${settingsUrl}" style="color: #9ca3af;">Afmeld notifikationer</a>
+    </p>
+  </div>
+</body>
+</html>`
+
+  const text = `${appName} — Ny kommentar
+
+${post.title}
+Kommentar af ${commenterName}
+
+${preview}
+
+Læs mere: ${boardUrl}
+
+---
+Du modtager denne e-mail fordi du har kommenteret eller oprettet dette opslag.
+Afmeld notifikationer: ${settingsUrl}`
+
+  try {
+    await sendEmail(
+      emails,
+      `Ny kommentar: ${post.title}`,
+      html,
+      text,
+      { 'List-Unsubscribe': `<${settingsUrl}>` },
+    )
+    db.insert(auditLogs).values({
+      userId: commenterId,
+      action: 'email_sent',
+      details: `Kommentar på "${post.title}" til ${emails.length} modtagere`,
+    }).execute().catch(() => {})
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Ukendt fejl'
+    db.insert(auditLogs).values({
+      userId: commenterId,
+      action: 'email_failed',
+      details: `Kommentar på "${post.title}": ${message}`,
+    }).execute().catch(() => {})
+    notifyWebhook('email/board-comment', message, `Post: "${post.title}"`).catch(() => {})
     throw err
   }
 }

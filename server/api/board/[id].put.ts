@@ -6,7 +6,7 @@ export default defineEventHandler(async (event) => {
   const db = useDb()
   const id = getRouterParam(event, 'id')!
 
-  const { title, content, isPinned, skipNotification } = await readBody(event)
+  const { title, content, isPinned, skipNotification, commentsEnabled } = await readBody(event)
 
   const [updated] = await db
     .update(boardPosts)
@@ -14,6 +14,7 @@ export default defineEventHandler(async (event) => {
       ...(title !== undefined && { title }),
       ...(content !== undefined && { content }),
       ...(isPinned !== undefined && { isPinned }),
+      ...(commentsEnabled !== undefined && { commentsEnabled }),
       updatedAt: new Date(),
     })
     .where(eq(boardPosts.id, id))
@@ -25,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   audit(event, 'post_updated', `"${updated.title}"`)
 
-  if (!skipNotification) {
+  if (!skipNotification && (title !== undefined || content !== undefined)) {
     notifyNewBoardPost(updated, user.name, user.id).catch((err) => {
       console.error('[email] Notification failed:', err)
     })

@@ -4,7 +4,7 @@
       <h1 class="text-2xl font-bold text-gray-900">Opslagstavle</h1>
       <button
         v-if="canWriteBoard"
-        @click="showEditor = !showEditor"
+        @click="showEditor ? cancelEdit() : (cancelEdit(), showEditor = true)"
         class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
       >
         {{ showEditor ? 'Annuller' : 'Nyt opslag' }}
@@ -23,9 +23,15 @@
             class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           />
         </div>
-        <div>
+        <div class="relative">
           <label class="block text-sm font-medium text-gray-700 mb-1">Indhold</label>
-          <MarkdownEditor ref="editor" v-model="form.content" :rows="6" required />
+          <MarkdownEditor ref="editor" v-model="form.content" :rows="6" required :preview-renderer="renderContent" />
+          <MentionDropdown
+            :show="editorMentions.showDropdown.value"
+            :users="editorMentions.filteredUsers.value"
+            :active-index="editorMentions.activeIndex.value"
+            @select="editorMentions.selectUser"
+          />
           <div v-if="(canReadFiles && docsList?.length) || (canReadCalendar && eventsList?.length)" class="mt-2 flex flex-wrap gap-3">
             <div v-if="canReadFiles && docsList?.length">
               <label class="block text-xs text-gray-500 mb-1">Indsæt dokumentreference:</label>
@@ -53,6 +59,10 @@
           <div class="flex items-center gap-2">
             <input id="pinned" v-model="form.isPinned" type="checkbox" class="rounded border-gray-300" />
             <label for="pinned" class="text-sm text-gray-700">Fastgjort opslag</label>
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="commentsEnabled" v-model="form.commentsEnabled" type="checkbox" class="rounded border-gray-300" />
+            <label for="commentsEnabled" class="text-sm text-gray-700">Tillad kommentarer</label>
           </div>
           <div class="flex items-center gap-2">
             <input id="skipNotification" v-model="form.skipNotification" type="checkbox" class="rounded border-gray-300" />
@@ -121,6 +131,11 @@
             </button>
           </div>
         </div>
+        <BoardComments
+          :post="post"
+          :comment-count="post.commentCount || 0"
+          @comment-count-changed="(delta: number) => { if (post.commentCount !== undefined) post.commentCount += delta }"
+        />
       </div>
     </div>
   </div>
@@ -133,11 +148,26 @@ const { canWriteBoard, canReadFiles, canReadCalendar, isAdmin } = useRoles()
 
 const showEditor = ref(false)
 const editingPost = ref<string | null>(null)
-const form = reactive({ title: '', content: '', isPinned: false, skipNotification: false })
-const editor = ref<{ insertAtCursor: (text: string) => void } | null>(null)
+const form = reactive({ title: '', content: '', isPinned: false, commentsEnabled: true, skipNotification: false })
+const editor = ref<{ insertAtCursor: (text: string) => void; textarea: HTMLTextAreaElement | null } | null>(null)
 
 const { data: posts, status, refresh } = useLazyFetch('/api/board')
 const { data: docsList } = useLazyFetch('/api/documents')
+const { data: mentionUsers } = useLazyFetch<{ id: string; name: string }[]>('/api/users/mentions')
+
+// Inline @ mention autocomplete for the post editor
+const editorTextarea = computed(() => editor.value?.textarea ?? null)
+const formContent = toRef(form, 'content')
+const editorMentions = useMentions(editorTextarea, formContent, mentionUsers)
+
+watch(formContent, () => {
+  nextTick(() => editorMentions.checkForMention())
+})
+
+watch(editorTextarea, (ta, oldTa) => {
+  if (oldTa) oldTa.removeEventListener('keydown', editorMentions.onKeydown)
+  if (ta) ta.addEventListener('keydown', editorMentions.onKeydown)
+})
 
 const now = new Date()
 const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -193,6 +223,13 @@ function renderContent(content: string) {
     return key
   })
 
+  // Replace @[Name](userId) mentions with styled spans
+  withPlaceholders = withPlaceholders.replace(/@\[([^\]]+)\]\([0-9a-f-]{36}\)/gi, (_match, name) => {
+    const key = `MENTION_${idx++}_MENTION`
+    placeholders.set(key, `<span class="inline-flex items-center px-1 rounded bg-blue-100 text-blue-800 font-medium text-sm">@${escapeHtml(name)}</span>`)
+    return key
+  })
+
   // Render markdown
   let html = renderMarkdown(withPlaceholders)
 
@@ -235,6 +272,7 @@ function startEdit(post: any) {
   form.title = post.title
   form.content = post.content
   form.isPinned = post.isPinned
+  form.commentsEnabled = post.commentsEnabled
   showEditor.value = true
 }
 
@@ -243,6 +281,7 @@ function cancelEdit() {
   form.title = ''
   form.content = ''
   form.isPinned = false
+  form.commentsEnabled = true
   form.skipNotification = false
   showEditor.value = false
 }
@@ -251,12 +290,12 @@ async function handleSave() {
   if (editingPost.value) {
     await $fetch(`/api/board/${editingPost.value}`, {
       method: 'PUT',
-      body: { title: form.title, content: form.content, isPinned: form.isPinned, skipNotification: form.skipNotification },
+      body: { title: form.title, content: form.content, isPinned: form.isPinned, commentsEnabled: form.commentsEnabled, skipNotification: form.skipNotification },
     })
   } else {
     await $fetch('/api/board', {
       method: 'POST',
-      body: { title: form.title, content: form.content, isPinned: form.isPinned, skipNotification: form.skipNotification },
+      body: { title: form.title, content: form.content, isPinned: form.isPinned, commentsEnabled: form.commentsEnabled, skipNotification: form.skipNotification },
     })
   }
   cancelEdit()

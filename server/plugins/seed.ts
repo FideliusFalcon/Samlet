@@ -21,6 +21,7 @@ export default defineNitroPlugin(async () => {
     { name: 'read-files', description: 'Can view and download documents' },
     { name: 'write-files', description: 'Can upload and delete documents' },
     { name: 'write-board', description: 'Can create and edit board posts' },
+    { name: 'write-comment', description: 'Kan skrive kommentarer på opslag' },
     { name: 'read-calendar', description: 'Kan se kalenderbegivenheder' },
     { name: 'write-calendar', description: 'Kan oprette og redigere kalenderbegivenheder' },
     { name: 'read-users', description: 'Kan se medlemsoversigten' },

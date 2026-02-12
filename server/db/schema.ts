@@ -71,7 +71,17 @@ export const boardPosts = pgTable('board_posts', {
   title: varchar('title', { length: 255 }).notNull(),
   content: text('content').notNull(),
   isPinned: boolean('is_pinned').notNull().default(false),
+  commentsEnabled: boolean('comments_enabled').notNull().default(true),
   authorId: uuid('author_id').notNull().references(() => users.id),
+  createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
+  updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
+})
+
+export const boardComments = pgTable('board_comments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  postId: uuid('post_id').notNull().references(() => boardPosts.id, { onDelete: 'cascade' }),
+  authorId: uuid('author_id').notNull().references(() => users.id),
+  content: text('content').notNull(),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })

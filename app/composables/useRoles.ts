@@ -10,11 +10,12 @@ export function useRoles() {
   const canReadFiles = computed(() => hasRole('read-files'))
   const canWriteFiles = computed(() => hasRole('write-files'))
   const canWriteBoard = computed(() => hasRole('write-board'))
+  const canWriteComment = computed(() => hasRole('write-comment'))
   const canReadCalendar = computed(() => hasRole('read-calendar'))
   const canWriteCalendar = computed(() => hasRole('write-calendar'))
   const canReadUsers = computed(() => hasRole('read-users'))
   const canWriteMembers = computed(() => hasRole('write-members'))
   const isAdmin = computed(() => user.value?.roles.includes('admin') ?? false)
 
-  return { hasRole, canReadFiles, canWriteFiles, canWriteBoard, canReadCalendar, canWriteCalendar, canReadUsers, canWriteMembers, isAdmin }
+  return { hasRole, canReadFiles, canWriteFiles, canWriteBoard, canWriteComment, canReadCalendar, canWriteCalendar, canReadUsers, canWriteMembers, isAdmin }
 }

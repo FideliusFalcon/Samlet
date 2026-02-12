@@ -10,6 +10,9 @@ export type AuditAction =
   | 'post_created'
   | 'post_updated'
   | 'post_deleted'
+  | 'comment_created'
+  | 'comment_updated'
+  | 'comment_deleted'
   | 'document_uploaded'
   | 'document_updated'
   | 'document_deleted'
@@ -44,7 +47,7 @@ export const auditCategories: Record<AuditCategory, { label: string; actions: Au
   },
   posts: {
     label: 'Opslag',
-    actions: ['post_created', 'post_updated', 'post_deleted', 'category_created', 'category_updated', 'category_deleted'],
+    actions: ['post_created', 'post_updated', 'post_deleted', 'comment_created', 'comment_updated', 'comment_deleted', 'category_created', 'category_updated', 'category_deleted'],
   },
   documents: {
     label: 'Dokumenter',

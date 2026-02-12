@@ -2,6 +2,7 @@ export const ROLES = {
   READ_FILES: 'read-files',
   WRITE_FILES: 'write-files',
   WRITE_BOARD: 'write-board',
+  WRITE_COMMENT: 'write-comment',
   READ_USERS: 'read-users',
   WRITE_MEMBERS: 'write-members',
   ADMIN: 'admin',
