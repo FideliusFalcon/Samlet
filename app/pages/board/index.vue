@@ -127,7 +127,7 @@
 </template>
 
 <script setup lang="ts">
-import { renderMarkdown } from '~~/shared/utils/markdown'
+import { renderMarkdown, sanitizeHtml } from '~~/shared/utils/markdown'
 
 const { canWriteBoard, canReadFiles, canReadCalendar, isAdmin } = useRoles()
 
@@ -201,7 +201,7 @@ function renderContent(content: string) {
     html = html.replace(key, link)
   }
 
-  return html
+  return sanitizeHtml(html)
 }
 
 function insertDocRef(event: Event) {

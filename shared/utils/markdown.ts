@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import DOMPurify from 'isomorphic-dompurify'
 
 function escapeHtmlChars(text: string): string {
   return text
@@ -18,6 +19,11 @@ marked.use({
   },
 })
 
+export function sanitizeHtml(html: string): string {
+  return DOMPurify.sanitize(html)
+}
+
 export function renderMarkdown(content: string): string {
-  return marked.parse(content, { async: false }) as string
+  const html = marked.parse(content, { async: false }) as string
+  return sanitizeHtml(html)
 }
