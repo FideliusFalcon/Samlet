@@ -1,0 +1,58 @@
+services:
+  app:
+    build: .
+    environment:
+      - NUXT_DATABASE_URL=postgresql://samlet:${POSTGRES_PASSWORD:-secretpassword}@db:5432/samlet
+      - NUXT_JWT_SECRET=${JWT_SECRET:-change-this-to-a-random-64-char-string-in-production}
+      - NUXT_UPLOAD_DIR=/app/uploads
+      - NUXT_ADMIN_EMAIL=${ADMIN_EMAIL:-admin@samlet.local}
+      - NUXT_ADMIN_PASSWORD=${ADMIN_PASSWORD:-herervisamlet}
+      - NUXT_PUBLIC_APP_NAME=Samlet
+      - NUXT_SMTP_HOST=${SMTP_HOST:-}
+      - NUXT_PUBLIC_SMTP_ENABLED=${SMTP_HOST:+true}
+      - NUXT_SMTP_PORT=${SMTP_PORT:-587}
+      - NUXT_SMTP_USER=${SMTP_USER:-}
+      - NUXT_SMTP_PASS=${SMTP_PASS:-}
+      - NUXT_SMTP_FROM=${SMTP_FROM:-noreply@samlet.local}
+      - NUXT_BASE_URL=${BASE_URL:-https://samlet.local}
+      - NUXT_WEBAUTHN_RP_ID=${WEBAUTHN_RP_ID:-localhost}
+      - NUXT_WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN:-http://localhost:3000}
+      - NUXT_WEBHOOK_URL=${WEBHOOK_URL:-}
+      - NUXT_BACKUP_DIR=/app/backups
+      - NODE_ENV=production
+    volumes:
+      - uploads:/app/uploads
+      - backups:/app/backups
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: samlet
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secretpassword}
+      POSTGRES_DB: samlet
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U samlet"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  uploads:
+  backups:

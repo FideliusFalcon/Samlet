@@ -1,0 +1,35 @@
+import { eq } from 'drizzle-orm'
+import { boardPosts } from '~~/server/db/schema'
+
+export default defineEventHandler(async (event) => {
+  const user = requireRole(event, ['write-board'])
+  const db = useDb()
+  const id = getRouterParam(event, 'id')!
+
+  const { title, content, isPinned, skipNotification } = await readBody(event)
+
+  const [updated] = await db
+    .update(boardPosts)
+    .set({
+      ...(title !== undefined && { title }),
+      ...(content !== undefined && { content }),
+      ...(isPinned !== undefined && { isPinned }),
+      updatedAt: new Date(),
+    })
+    .where(eq(boardPosts.id, id))
+    .returning()
+
+  if (!updated) {
+    throw createError({ statusCode: 404, message: 'Opslag ikke fundet' })
+  }
+
+  audit(event, 'post_updated', `"${updated.title}"`)
+
+  if (!skipNotification) {
+    notifyNewBoardPost(updated, user.name, user.id).catch((err) => {
+      console.error('[email] Notification failed:', err)
+    })
+  }
+
+  return updated
+})
