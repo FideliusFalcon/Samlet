@@ -20,6 +20,42 @@
         </label>
       </div>
 
+      <!-- Contact info section -->
+      <div class="bg-white rounded-lg shadow p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">Kontaktoplysninger</h2>
+        <p class="text-sm text-gray-500 mb-4">Disse oplysninger vises i medlemsoversigten.</p>
+        <form @submit.prevent="saveContactInfo" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Telefon</label>
+            <input
+              v-model="contactForm.phone"
+              type="tel"
+              placeholder="F.eks. +45 12 34 56 78"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700">Adresse</label>
+            <textarea
+              v-model="contactForm.address"
+              rows="3"
+              placeholder="Gade, postnr. og by"
+              class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              type="submit"
+              class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-sm font-medium"
+            >
+              Gem
+            </button>
+            <p v-if="contactSuccess" class="text-sm text-green-600">{{ contactSuccess }}</p>
+            <p v-if="contactError" class="text-sm text-red-600">{{ contactError }}</p>
+          </div>
+        </form>
+      </div>
+
       <!-- Passkeys section -->
       <div class="bg-white rounded-lg shadow p-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-4">Adgangsnøgler</h2>
@@ -90,6 +126,31 @@ async function toggleNotifications() {
     user.value = { ...user.value, notificationsEnabled: newValue }
   } catch {
     // Revert on failure
+  }
+}
+
+// Contact info
+const contactForm = reactive({
+  phone: user.value?.phone || '',
+  address: user.value?.address || '',
+})
+const contactSuccess = ref('')
+const contactError = ref('')
+
+async function saveContactInfo() {
+  if (!user.value) return
+  contactSuccess.value = ''
+  contactError.value = ''
+  try {
+    const updated = await $fetch(`/api/members/${user.value.id}`, {
+      method: 'PUT',
+      body: { phone: contactForm.phone, address: contactForm.address },
+    })
+    user.value = { ...user.value, phone: updated.phone, address: updated.address }
+    contactSuccess.value = 'Kontaktoplysninger gemt'
+    setTimeout(() => { contactSuccess.value = '' }, 3000)
+  } catch (e: any) {
+    contactError.value = e.data?.message || 'Noget gik galt'
   }
 }
 

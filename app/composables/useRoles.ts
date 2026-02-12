@@ -12,7 +12,9 @@ export function useRoles() {
   const canWriteBoard = computed(() => hasRole('write-board'))
   const canReadCalendar = computed(() => hasRole('read-calendar'))
   const canWriteCalendar = computed(() => hasRole('write-calendar'))
+  const canReadUsers = computed(() => hasRole('read-users'))
+  const canWriteMembers = computed(() => hasRole('write-members'))
   const isAdmin = computed(() => user.value?.roles.includes('admin') ?? false)
 
-  return { hasRole, canReadFiles, canWriteFiles, canWriteBoard, canReadCalendar, canWriteCalendar, isAdmin }
+  return { hasRole, canReadFiles, canWriteFiles, canWriteBoard, canReadCalendar, canWriteCalendar, canReadUsers, canWriteMembers, isAdmin }
 }

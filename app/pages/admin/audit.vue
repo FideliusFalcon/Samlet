@@ -136,7 +136,7 @@ const categories: Record<string, { label: string; actions: string[] }> = {
   email: { label: 'E-mail', actions: ['email_sent', 'email_failed'] },
   posts: { label: 'Opslag', actions: ['post_created', 'post_updated', 'post_deleted', 'category_created', 'category_updated', 'category_deleted'] },
   documents: { label: 'Dokumenter', actions: ['document_uploaded', 'document_updated', 'document_deleted'] },
-  users: { label: 'Brugere', actions: ['user_created', 'user_updated', 'user_deleted'] },
+  users: { label: 'Brugere', actions: ['user_created', 'user_updated', 'user_deleted', 'member_updated'] },
   calendar: { label: 'Kalender', actions: ['event_created', 'event_updated', 'event_deleted', 'event_response'] },
   settings: { label: 'Indstillinger', actions: ['notifications_toggled'] },
 }
@@ -176,6 +176,7 @@ const actionLabels: Record<string, string> = {
   event_updated: 'Begivenhed opdateret',
   event_deleted: 'Begivenhed slettet',
   event_response: 'Begivenhedssvar',
+  member_updated: 'Medlemsoplysninger opdateret',
 }
 
 function actionLabel(action: string) {

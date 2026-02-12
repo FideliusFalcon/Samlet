@@ -193,6 +193,8 @@ function roleBadgeClass(role: string) {
     case 'read-files': return 'bg-gray-100 text-gray-800'
     case 'read-calendar': return 'bg-orange-100 text-orange-800'
     case 'write-calendar': return 'bg-yellow-100 text-yellow-800'
+    case 'read-users': return 'bg-teal-100 text-teal-800'
+    case 'write-members': return 'bg-cyan-100 text-cyan-800'
     default: return 'bg-gray-100 text-gray-800'
   }
 }
@@ -202,7 +204,7 @@ function openCreateModal() {
   form.name = ''
   form.email = ''
   form.password = ''
-  form.roleNames = ['read-files', 'read-calendar']
+  form.roleNames = ['read-files', 'read-calendar', 'read-users']
   form.isActive = true
   formError.value = ''
   showModal.value = true

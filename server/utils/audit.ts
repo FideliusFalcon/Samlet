@@ -29,6 +29,7 @@ export type AuditAction =
   | 'event_updated'
   | 'event_deleted'
   | 'event_response'
+  | 'member_updated'
 
 export type AuditCategory = 'authentication' | 'email' | 'posts' | 'documents' | 'users' | 'calendar' | 'settings'
 
@@ -51,7 +52,7 @@ export const auditCategories: Record<AuditCategory, { label: string; actions: Au
   },
   users: {
     label: 'Brugere',
-    actions: ['user_created', 'user_updated', 'user_deleted'],
+    actions: ['user_created', 'user_updated', 'user_deleted', 'member_updated'],
   },
   calendar: {
     label: 'Kalender',

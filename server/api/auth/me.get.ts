@@ -23,6 +23,8 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       roles: userRoleRows.map(r => r.roleName),
       notificationsEnabled: user.notificationsEnabled,
+      phone: user.phone,
+      address: user.address,
     },
   }
 })

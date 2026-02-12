@@ -31,6 +31,14 @@
               >
                 Kalender
               </NuxtLink>
+              <NuxtLink
+                v-if="canReadUsers"
+                to="/members"
+                class="text-sm font-medium text-gray-600 hover:text-gray-900"
+                active-class="text-gray-900"
+              >
+                Medlemmer
+              </NuxtLink>
               <div v-if="isAdmin" class="relative">
                 <button
                   @click="adminMenuOpen = !adminMenuOpen"
@@ -120,6 +128,15 @@
           >
             Kalender
           </NuxtLink>
+          <NuxtLink
+            v-if="canReadUsers"
+            to="/members"
+            class="block px-3 py-2 rounded-md text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            active-class="text-gray-900 bg-gray-50"
+            @click="mobileMenuOpen = false"
+          >
+            Medlemmer
+          </NuxtLink>
           <template v-if="isAdmin">
             <div class="px-3 pt-3 pb-1 text-xs font-semibold text-gray-400 uppercase">Administration</div>
             <NuxtLink
@@ -174,7 +191,7 @@
 
 <script setup lang="ts">
 const { user, logout } = useAuth()
-const { canReadFiles, canReadCalendar, isAdmin } = useRoles()
+const { canReadFiles, canReadCalendar, canReadUsers, isAdmin } = useRoles()
 const appName = useRuntimeConfig().public.appName
 const mobileMenuOpen = ref(false)
 const adminMenuOpen = ref(false)

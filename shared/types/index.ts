@@ -4,6 +4,16 @@ export interface AuthUser {
   name: string
   roles: string[]
   notificationsEnabled: boolean
+  phone: string | null
+  address: string | null
+}
+
+export interface Member {
+  id: string
+  name: string
+  email: string
+  phone: string | null
+  address: string | null
 }
 
 export interface BoardPost {

@@ -114,6 +114,8 @@ export default defineEventHandler(async (event) => {
       name: user.name,
       roles: roleNames,
       notificationsEnabled: user.notificationsEnabled,
+      phone: user.phone,
+      address: user.address,
     },
   }
 })

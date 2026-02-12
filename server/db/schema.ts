@@ -8,6 +8,8 @@ export const users = pgTable('users', {
   isActive: boolean('is_active').notNull().default(true),
   notificationsEnabled: boolean('notifications_enabled').notNull().default(true),
   icsToken: varchar('ics_token', { length: 64 }).unique(),
+  phone: varchar('phone', { length: 50 }),
+  address: text('address'),
   createdAt: timestamp('created_at', { mode: 'date' }).defaultNow().notNull(),
   updatedAt: timestamp('updated_at', { mode: 'date' }).defaultNow().notNull(),
 })

@@ -23,6 +23,8 @@ export default defineNitroPlugin(async () => {
     { name: 'write-board', description: 'Can create and edit board posts' },
     { name: 'read-calendar', description: 'Kan se kalenderbegivenheder' },
     { name: 'write-calendar', description: 'Kan oprette og redigere kalenderbegivenheder' },
+    { name: 'read-users', description: 'Kan se medlemsoversigten' },
+    { name: 'write-members', description: 'Kan redigere medlemmers kontaktoplysninger' },
     { name: 'admin', description: 'Full system access' },
   ]
   for (const role of allRoles) {

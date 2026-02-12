@@ -9,8 +9,15 @@ export default defineEventHandler(async (event) => {
 
   const { email, name, password, isActive, roleNames } = await readBody(event)
 
+  if (email !== undefined) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      throw createError({ statusCode: 400, message: 'Ugyldigt e-mailformat' })
+    }
+  }
+
   const updateData: Record<string, unknown> = { updatedAt: new Date() }
-  if (email !== undefined) updateData.email = email
+  if (email !== undefined) updateData.email = email.trim()
   if (name !== undefined) updateData.name = name
   if (isActive !== undefined) updateData.isActive = isActive
   if (password) updateData.passwordHash = await bcrypt.hash(password, 12)
