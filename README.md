@@ -4,11 +4,11 @@ En samarbejdsplatform til foreninger med opslagstavle, dokumentarkiv, kalender o
 
 ## Funktioner
 
-- **Opslagstavle** — Opret og fastgør opslag med markdown-formatering
+- **Opslagstavle** — Opret og fastgør opslag med markdown-formatering, kommentarer og @omtaler
 - **Dokumentarkiv** — Upload og organiser PDF-dokumenter i kategorier
 - **Kalender** — Opret begivenheder med RSVP, ICS-feed og påmindelser via e-mail
 - **Brugerstyring** — Rollebaseret adgang, login med adgangskode, passkeys eller magic links
-- **Notifikationer** — E-mail-notifikationer for nye opslag, begivenheder og påmindelser
+- **Notifikationer** — E-mail-notifikationer for nye opslag, kommentarer, begivenheder og påmindelser
 - **Automatisk backup** — Daglig PostgreSQL-backup med 30 dages opbevaring
 
 ## Deployment
@@ -68,4 +68,4 @@ Se `.env.example` for alle tilgængelige variabler.
 
 ---
 
-`opslagstavle` `dokumentarkiv` `kalender` `brugerstyring` `rollebaseret adgang` `passkeys` `magic links` `RSVP` `ICS-feed` `e-mail-notifikationer` `påmindelser` `markdown` `PDF-upload` `automatisk backup` `foreningsportal` `selvhostet`
+`opslagstavle` `kommentarer` `@omtaler` `dokumentarkiv` `kalender` `brugerstyring` `rollebaseret adgang` `passkeys` `magic links` `RSVP` `ICS-feed` `e-mail-notifikationer` `påmindelser` `markdown` `PDF-upload` `automatisk backup` `foreningsportal` `selvhostet`

@@ -15,8 +15,8 @@ A team collaboration platform built with Nuxt 3 for managing a bulletin board, d
 
 ```
 app/                        # Nuxt frontend
-  components/               # CalendarGrid, MarkdownEditor, PasskeySetupPrompt
-  composables/              # useAuth, useRoles, useCategoryColors
+  components/               # CalendarGrid, MarkdownEditor, BoardComments, MentionDropdown, PasskeySetupPrompt
+  composables/              # useAuth, useRoles, useCategoryColors, useMentions
   layouts/                  # default (nav header), auth (centered)
   middleware/auth.global.ts # Redirects unauthenticated users to /login
   pages/                    # Vue router pages (see below)
@@ -42,7 +42,7 @@ shared/                     # Code shared between frontend and backend
 |---|---|---|
 | `/` | `pages/index.vue` | Redirects to `/board` |
 | `/login` | `pages/login.vue` | Login (password, passkey, magic link) |
-| `/board` | `pages/board/index.vue` | Bulletin board with pinned posts |
+| `/board` | `pages/board/index.vue` | Bulletin board with pinned posts, comments, @mentions |
 | `/documents` | `pages/documents/index.vue` | Document list, upload, category filter |
 | `/documents/:id` | `pages/documents/[id].vue` | PDF viewer |
 | `/calendar` | `pages/calendar/index.vue` | Monthly grid + list view, RSVP |
@@ -59,7 +59,8 @@ Defined in `server/db/schema.ts`. Key tables:
 - **roles** / **user_roles** — RBAC many-to-many
 - **categories** — name, color (for documents)
 - **documents** — title, filename, storagePath, fileSize, categoryId, uploadedBy
-- **board_posts** — title, content (markdown), pinned, authorId
+- **board_posts** — title, content (markdown), pinned, commentsEnabled, authorId
+- **board_comments** — postId (cascade delete), authorId, content (plain text), timestamps
 - **calendar_events** — title, description, location, date, startTime, endTime, allDay, createdBy
 - **event_responses** — userId, eventId, status (accepted/declined)
 - **passkey_credentials** — WebAuthn credential storage per user
@@ -73,18 +74,21 @@ Defined in `shared/utils/roles.ts`:
 - `admin` — full access
 - `read-files` / `write-files` — document access
 - `write-board` — create/edit board posts
+- `write-comment` — comment on board posts (enabled by default)
 - `read-calendar` / `write-calendar` — calendar access
+- `read-users` — view member directory
+- `write-members` — edit member contact information
 
 ## API Routes
 
 All under `/api/`. File naming follows Nitro convention (`index.get.ts`, `[id].put.ts`, etc.):
 
 - **auth/** — login, logout, me, notifications, magic-link, passkey (register/login/list/delete)
-- **board/** — CRUD for posts
+- **board/** — CRUD for posts, [id]/comments (CRUD for comments)
 - **calendar/** — CRUD for events, respond (RSVP), responses, ics-token, feed/[token] (ICS)
 - **documents/** — CRUD for documents, [id]/file (PDF download)
 - **categories/** — CRUD for categories
-- **users/** — CRUD for users (admin only)
+- **users/** — CRUD for users (admin only), mentions (active user list for @mentions)
 - **roles/** — list available roles
 - **admin/audit** — audit log query
 
@@ -129,9 +133,11 @@ Services: `app` (Node 22 Alpine), `db` (Postgres 16 Alpine), `cloudflared`.
 - **Auth flow:** JWT stored in HTTP-only cookie (`auth_token`), 45-day expiry. Server middleware decodes token and sets `event.context.user`.
 - **Authorization:** `requireAuth(event)` and `requireRole(event, 'role-name')` utilities in `server/utils/auth.ts`.
 - **File storage:** Uploads saved to `{uploadDir}/{year}/{month}/{uuid}.pdf` via `server/utils/storage.ts`.
-- **Audit logging:** `audit(event, action, details)` in `server/utils/audit.ts`. 23 action types tracked.
-- **Email:** Rate-limited to 30/min. HTML templates inline in `server/utils/email.ts`. Notifications for board posts, calendar events, and reminders.
-- **Markdown:** Board posts support markdown via `marked`. Editor component with toolbar and live preview.
+- **Audit logging:** `audit(event, action, details)` in `server/utils/audit.ts`. 26 action types tracked (includes comment_created/updated/deleted).
+- **Email:** Rate-limited to 30/min. HTML templates inline in `server/utils/email.ts`. Notifications for board posts, comments, calendar events, and reminders. Comment notifications go to post author, previous commenters, and @mentioned users.
+- **Markdown:** Board posts support markdown via `marked`. Editor component with toolbar and live preview. Preview supports rendering document/event references and @mentions.
+- **Comments:** Board posts have a collapsible comment section (`BoardComments` component). Comments are plain text (no markdown) with @mention support. Post authors can disable comments per post. Users with `write-comment` role can comment; `write-board`/admin can moderate.
+- **@Mentions:** Inline autocomplete via `useMentions` composable and `MentionDropdown` component. Type `@` followed by a name to see matching users. Stored as `@[Name](userId)`, rendered as styled badges. Works in post editor and comment textareas.
 - **Admin seed:** `server/plugins/seed.ts` creates the admin user and default roles on first startup.
 - **Scheduled jobs:** All background jobs run in `server/plugins/scheduled-jobs.ts`. Jobs: event reminders (every 15 min), trash file purge (daily, 30-day retention), audit log cleanup (daily, 3-month retention), PostgreSQL backup (daily, kept in `BACKUP_DIR`, cleaned after 30 days).
 - **Error webhook:** `server/utils/webhook.ts` sends a POST with `{ timestamp, source, error, details }` to `WEBHOOK_URL` on scheduled job failures and email send failures. No-op if URL is not configured.
