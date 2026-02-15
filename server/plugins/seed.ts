@@ -1,3 +1,5 @@
+const log = useLogger('seed')
+
 import bcrypt from 'bcrypt'
 import { eq, sql } from 'drizzle-orm'
 import { drizzle } from 'drizzle-orm/node-postgres'
@@ -11,9 +13,9 @@ export default defineNitroPlugin(async () => {
   // Run migrations
   try {
     await migrate(db, { migrationsFolder: './server/db/migrations' })
-    console.log('[seed] Migrations applied successfully')
+    log.info('Migrations applied successfully')
   } catch (err) {
-    console.error('[seed] Migration error:', err)
+    log.error({ err }, 'Migration error')
   }
 
   // Seed roles (upsert so new roles are added to existing deployments)
@@ -31,7 +33,7 @@ export default defineNitroPlugin(async () => {
   for (const role of allRoles) {
     await db.insert(schema.roles).values(role).onConflictDoNothing({ target: schema.roles.name })
   }
-  console.log('[seed] Roles synced')
+  log.info('Roles synced')
 
   // Seed admin user if no users exist
   const existingUsers = await db.select().from(schema.users).limit(1)
@@ -58,6 +60,6 @@ export default defineNitroPlugin(async () => {
       })
     }
 
-    console.log(`[seed] Admin user created: ${adminEmail}`)
+    log.info({ email: adminEmail }, 'Admin user created')
   }
 })

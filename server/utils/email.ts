@@ -5,6 +5,8 @@ import { users, auditLogs, documents, calendarEvents, userRoles, roles, eventRes
 import { renderMarkdown } from '~~/shared/utils/markdown'
 import { notifyWebhook } from '~~/server/utils/webhook'
 
+const log = useLogger('email')
+
 let transporter: Transporter | null = null
 
 // Rate limiter: max 30 emails per 60 seconds
@@ -22,7 +24,7 @@ function checkRateLimit(): boolean {
     rateLimit.windowStart = now
   }
   if (rateLimit.count >= rateLimit.max) {
-    console.warn('[email] Rate limit reached, skipping email')
+    log.warn('Rate limit reached, skipping email')
     return false
   }
   rateLimit.count++
@@ -626,7 +628,7 @@ Afmeld notifikationer: ${settingsUrl}`
       await sendEmail(recipient.email, `Påmindelse: ${ev.title} i morgen`, html, text, { 'List-Unsubscribe': `<${settingsUrl}>` })
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      console.error(`[email] Reminder failed for ${recipient.email}:`, err)
+      log.error({ err, recipient: recipient.email }, 'Reminder failed')
       notifyWebhook('email/event-reminder', message, `Event: "${ev.title}", Recipient: ${recipient.email}`).catch(() => {})
     }
   }

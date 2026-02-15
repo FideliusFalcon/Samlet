@@ -2,6 +2,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   future: { compatibilityVersion: 4 },
 
+
   app: {
     head: {
       htmlAttrs: { lang: 'da' },
@@ -28,6 +29,8 @@ export default defineNuxtConfig({
     webauthnOrigin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000',
     webhookUrl: process.env.WEBHOOK_URL || '',
     backupDir: process.env.BACKUP_DIR || './backups',
+    logDir: process.env.LOG_DIR || '',
+    logLevel: process.env.LOG_LEVEL || 'info',
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     public: {
       appName: process.env.APP_NAME || 'Samlet',

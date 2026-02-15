@@ -26,7 +26,7 @@ export default defineEventHandler(async (event) => {
 
   if (!skipNotification) {
     notifyNewBoardPost(post, user.name, user.id).catch((err) => {
-      console.error('[email] Notification failed:', err)
+      useLogger('email').error({ err, postId: post.id }, 'Board post notification failed')
     })
   }
 

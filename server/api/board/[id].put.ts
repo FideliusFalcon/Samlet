@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   if (!skipNotification && (title !== undefined || content !== undefined)) {
     notifyNewBoardPost(updated, user.name, user.id).catch((err) => {
-      console.error('[email] Notification failed:', err)
+      useLogger('email').error({ err, postId: updated.id }, 'Board post update notification failed')
     })
   }
 

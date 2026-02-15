@@ -1,3 +1,5 @@
+const log = useLogger('jobs')
+
 import { eq, and, between, isNull, lt } from 'drizzle-orm'
 import { calendarEvents, auditLogs } from '~~/server/db/schema'
 import { notifyEventReminder } from '~~/server/utils/email'
@@ -39,9 +41,9 @@ const jobs: ScheduledJob[] = [
             .update(calendarEvents)
             .set({ reminderSentAt: new Date() })
             .where(eq(calendarEvents.id, ev.id))
-          console.log(`[reminder] Sent reminder for "${ev.title}"`)
+          log.info({ event: ev.title, eventId: ev.id }, 'Sent reminder')
         } catch (err) {
-          console.error(`[reminder] Failed for "${ev.title}":`, err)
+          log.error({ err, event: ev.title, eventId: ev.id }, 'Reminder failed')
         }
       }
     },
@@ -52,7 +54,7 @@ const jobs: ScheduledJob[] = [
     async run() {
       const purged = await purgeTrash(30)
       if (purged > 0) {
-        console.log(`[trash] Purged ${purged} file(s) from trash`)
+        log.info({ purged }, 'Purged files from trash')
       }
     },
   },
@@ -70,7 +72,7 @@ const jobs: ScheduledJob[] = [
 
       const deleted = result.rowCount ?? 0
       if (deleted > 0) {
-        console.log(`[audit] Cleaned up ${deleted} audit log(s) older than 3 months`)
+        log.info({ deleted }, 'Cleaned up old audit logs')
       }
     },
   },
@@ -94,11 +96,11 @@ const jobs: ScheduledJob[] = [
           else resolve()
         })
         proc.stderr?.on('data', (data: string) => {
-          console.error(`[backup] pg_dump stderr: ${data}`)
+          log.warn({ stderr: String(data).trim() }, 'pg_dump stderr output')
         })
       })
 
-      console.log(`[backup] Created backup: ${filename}`)
+      log.info({ filename }, 'Created backup')
     },
   },
   {
@@ -111,7 +113,8 @@ const jobs: ScheduledJob[] = [
       let files: string[]
       try {
         files = await readdir(backupDir)
-      } catch {
+      } catch (err) {
+        log.debug({ err }, 'Backup directory not readable, skipping cleanup')
         return
       }
 
@@ -127,11 +130,13 @@ const jobs: ScheduledJob[] = [
             await unlink(filePath)
             removed++
           }
-        } catch { /* ignore */ }
+        } catch (err) {
+          log.debug({ err, file: f }, 'Failed to process old backup')
+        }
       }
 
       if (removed > 0) {
-        console.log(`[backup] Removed ${removed} backup(s) older than 30 days`)
+        log.info({ removed }, 'Removed old backups')
       }
     },
   },
@@ -153,7 +158,7 @@ async function runJob(job: ScheduledJob) {
     await job.run()
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
-    console.error(`[${job.name}] Failed:`, err)
+    log.error({ err, job: job.name }, `Scheduled job failed: ${job.name}`)
     notifyWebhook(`scheduled-job/${job.name}`, message).catch(() => {})
   }
 }

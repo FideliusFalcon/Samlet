@@ -16,6 +16,7 @@ A team collaboration platform built with Nuxt 3 for managing a bulletin board, d
 - **marked** — Markdown-to-HTML rendering for board posts. Used in both the editor preview and post display.
 - **isomorphic-dompurify** — HTML sanitization to prevent XSS. Sanitizes rendered markdown before inserting via `v-html`.
 - **Nodemailer** — SMTP email sending for notifications (new posts, comments, calendar events, reminders, magic links).
+- **pino** — Structured JSON logger. Used for all server-side logging with daily file rotation via `pino-roll`.
 - **pg** — PostgreSQL client driver used by Drizzle ORM for database connections.
 - **Docker** — Multi-stage production build (Node 22 Alpine). Compose setup with app, PostgreSQL, and optional Cloudflare Tunnel.
 
@@ -37,7 +38,8 @@ server/                     # Nitro backend
   middleware/auth.ts         # JWT verification, sets event.context.user
   plugins/seed.ts             # Seeds admin user on first run
   plugins/scheduled-jobs.ts   # All scheduled background jobs (see below)
-  utils/                      # auth, audit, db, email, jwt, storage, webhook
+  middleware/0.logger.ts       # Request logging (method, path, status, duration)
+  utils/                      # auth, audit, db, email, jwt, logger, storage, webhook
 shared/                     # Code shared between frontend and backend
   types/index.ts            # TypeScript interfaces
   utils/roles.ts            # Role constants
@@ -126,6 +128,8 @@ See `.env.example`. Key variables (prefixed with `NUXT_` in docker-compose):
 | `WEBAUTHN_RP_ID` / `WEBAUTHN_ORIGIN` | WebAuthn relying party config |
 | `WEBHOOK_URL` | Error webhook URL (POST with JSON on failures) |
 | `BACKUP_DIR` | PostgreSQL backup directory (default `./backups`) |
+| `LOG_DIR` | Log file directory; empty = stdout only |
+| `LOG_LEVEL` | Log level: trace/debug/info/warn/error/fatal (default: `info`) |
 | `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare Tunnel token (docker-compose) |
 
 ## Docker
@@ -134,7 +138,7 @@ See `.env.example`. Key variables (prefixed with `NUXT_` in docker-compose):
 docker compose up -d   # Starts app, PostgreSQL, and Cloudflare Tunnel
 ```
 
-Services: `app` (Node 22 Alpine), `db` (Postgres 16 Alpine), `cloudflared`.
+Services: `app` (Node 22 Alpine), `db` (Postgres 16 Alpine), `cloudflared`. Volumes: `pgdata`, `uploads`, `backups`, `logs`.
 
 ## Key Patterns
 
@@ -149,3 +153,4 @@ Services: `app` (Node 22 Alpine), `db` (Postgres 16 Alpine), `cloudflared`.
 - **Admin seed:** `server/plugins/seed.ts` creates the admin user and default roles on first startup.
 - **Scheduled jobs:** All background jobs run in `server/plugins/scheduled-jobs.ts`. Jobs: event reminders (every 15 min), trash file purge (daily, 30-day retention), audit log cleanup (daily, 3-month retention), PostgreSQL backup (daily, kept in `BACKUP_DIR`, cleaned after 30 days).
 - **Error webhook:** `server/utils/webhook.ts` sends a POST with `{ timestamp, source, error, details }` to `WEBHOOK_URL` on scheduled job failures and email send failures. No-op if URL is not configured.
+- **Logging:** `pino` for structured JSON logging + `pino-roll` for daily file rotation. `server/utils/logger.ts` exports `useLogger(module?)` which returns a pino child logger with a `module` field, auto-imported by Nitro. Always logs to stdout; when `LOG_DIR` is set, also writes daily-rotated files (`samlet.YYYY-MM-DD`). Request logging in `server/middleware/0.logger.ts` logs all `/api/` requests with method, path, statusCode, duration, and userId. Module names: `seed`, `email`, `audit`, `webhook`, `turnstile`, `storage`, `jobs`, `auth`, `http`.

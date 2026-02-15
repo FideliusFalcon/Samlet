@@ -1,3 +1,5 @@
+const log = useLogger('webhook')
+
 let _webhookUrl: string | null | undefined
 
 function getWebhookUrl(): string | null {
@@ -27,6 +29,6 @@ export async function notifyWebhook(source: string, error: string, details?: str
     })
   } catch (err) {
     // Don't let webhook failures cascade
-    console.error(`[webhook] Failed to send notification:`, err)
+    log.error({ err }, 'Failed to send notification')
   }
 }

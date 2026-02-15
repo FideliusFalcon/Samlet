@@ -1,6 +1,8 @@
 import type { H3Event } from 'h3'
 import { auditLogs } from '~~/server/db/schema'
 
+const log = useLogger('audit')
+
 export type AuditAction =
   | 'login'
   | 'login_failed'
@@ -86,6 +88,6 @@ export function audit(event: H3Event, action: AuditAction, details?: string) {
     details,
     ipAddress: ip,
   }).execute().catch((err) => {
-    console.error('[audit] Failed to write log:', err)
+    log.error({ err }, 'Failed to write audit log')
   })
 }

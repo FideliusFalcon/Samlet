@@ -18,7 +18,7 @@ RUN apk add --no-cache postgresql-client gzip
 COPY --from=builder /app/.output ./.output
 COPY --from=builder /app/server/db/migrations ./server/db/migrations
 
-RUN mkdir -p /app/uploads /app/backups
+RUN mkdir -p /app/uploads /app/backups /app/logs
 
 EXPOSE 3000
 CMD ["node", ".output/server/index.mjs"]

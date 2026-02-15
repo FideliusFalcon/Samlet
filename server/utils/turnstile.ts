@@ -1,3 +1,5 @@
+const log = useLogger('turnstile')
+
 const VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify'
 
 let _secretKey: string | null | undefined
@@ -48,7 +50,7 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
     const result: TurnstileVerifyResponse = await response.json()
 
     if (!result.success) {
-      console.warn('[turnstile] Verification failed:', result['error-codes'])
+      log.warn({ errorCodes: result['error-codes'] }, 'Verification failed')
       throw createError({
         statusCode: 403,
         message: 'Sikkerhedsverifikation mislykkedes',
@@ -60,6 +62,6 @@ export async function verifyTurnstile(token: string | undefined, ip?: string): P
 
     // Network/timeout errors — log but allow through to prevent
     // Cloudflare outages from locking all users out
-    console.error('[turnstile] API call failed:', err)
+    log.error({ err }, 'API call failed, allowing request through')
   }
 }

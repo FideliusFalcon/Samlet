@@ -1,3 +1,5 @@
+const log = useLogger('storage')
+
 import { randomUUID } from 'crypto'
 import { join, extname, resolve, basename } from 'path'
 import { mkdir, writeFile, readFile, unlink, rename, readdir, stat } from 'fs/promises'
@@ -42,8 +44,8 @@ export async function readStoredFile(relativePath: string): Promise<Buffer> {
 export async function deleteStoredFile(relativePath: string): Promise<void> {
   try {
     await unlink(resolveStoragePath(relativePath))
-  } catch {
-    // File may already be deleted
+  } catch (err) {
+    log.debug({ err, path: relativePath }, 'File already deleted or not found')
   }
 }
 
@@ -58,8 +60,8 @@ export async function trashStoredFile(relativePath: string): Promise<void> {
 
   try {
     await rename(sourcePath, trashPath)
-  } catch {
-    // File may already be deleted — ignore
+  } catch (err) {
+    log.debug({ err, path: relativePath }, 'Could not move file to trash')
   }
 }
 
@@ -70,7 +72,8 @@ export async function purgeTrash(maxAgeDays: number = 30): Promise<number> {
   let files: string[]
   try {
     files = await readdir(trashDir)
-  } catch {
+  } catch (err) {
+    log.debug({ err }, 'Trash directory not readable, skipping purge')
     return 0
   }
 
@@ -85,8 +88,8 @@ export async function purgeTrash(maxAgeDays: number = 30): Promise<number> {
         await unlink(filePath)
         purged++
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      log.debug({ err, file }, 'Failed to process trash file')
     }
   }
 

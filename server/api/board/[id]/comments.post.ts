@@ -43,7 +43,7 @@ export default defineEventHandler(async (event) => {
   audit(event, 'comment_created', `På "${post.title}"`)
 
   notifyNewBoardComment(post, comment, user.name, user.id).catch((err) => {
-    console.error('[email] Comment notification failed:', err)
+    useLogger('email').error({ err, postId: post.id, commentId: comment.id }, 'Comment notification failed')
   })
 
   return {

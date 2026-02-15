@@ -10,7 +10,8 @@ export default defineEventHandler(async (event) => {
         name: payload.name,
         roles: payload.roles,
       }
-    } catch {
+    } catch (err) {
+      useLogger('auth').debug({ err }, 'JWT verification failed, clearing cookie')
       deleteCookie(event, 'auth_token')
     }
   }

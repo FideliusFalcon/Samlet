@@ -23,10 +23,13 @@ services:
       - NUXT_PUBLIC_TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
       - NUXT_PUBLIC_TURNSTILE_APPEARANCE=${TURNSTILE_APPEARANCE:-always}
       - NUXT_PUBLIC_TURNSTILE_THEME=${TURNSTILE_THEME:-auto}
+      - LOG_DIR=/app/logs
+      - LOG_LEVEL=${LOG_LEVEL:-info}
       - NODE_ENV=production
     volumes:
       - uploads:/app/uploads
       - backups:/app/backups
+      - logs:/app/logs
     depends_on:
       db:
         condition: service_healthy
@@ -60,3 +63,4 @@ volumes:
   pgdata:
   uploads:
   backups:
+  logs:

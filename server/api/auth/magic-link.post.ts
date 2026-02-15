@@ -56,7 +56,7 @@ export default defineEventHandler(async (event) => {
     })
 
     sendMagicLinkEmail(email, token).catch((err) => {
-      console.error('[magic-link] Failed to send email:', err)
+      useLogger('email').error({ err }, 'Magic link email failed')
     })
 
     audit(event, 'magic_link_requested', email)

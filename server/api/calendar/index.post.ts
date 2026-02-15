@@ -39,7 +39,7 @@ export default defineEventHandler(async (event) => {
 
   if (!skipNotification) {
     notifyCalendarEvent(created, user.name, user.id, false).catch((err) => {
-      console.error('[email] Calendar notification failed:', err)
+      useLogger('email').error({ err, eventId: created.id }, 'Calendar event notification failed')
     })
   }
 
