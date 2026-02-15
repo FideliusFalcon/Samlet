@@ -4,12 +4,20 @@ A team collaboration platform built with Nuxt 3 for managing a bulletin board, d
 
 ## Tech Stack
 
-- **Frontend:** Nuxt 3 (Vue 3), Tailwind CSS
-- **Backend:** Nitro (Nuxt server engine)
-- **Database:** PostgreSQL 16 with Drizzle ORM
-- **Auth:** JWT (jose), bcrypt, WebAuthn passkeys (@simplewebauthn), magic links
-- **Email:** Nodemailer with HTML templates
-- **Deployment:** Docker multi-stage build, Cloudflare Tunnel
+- **Nuxt 3** — Full-stack Vue 3 framework. Provides file-based routing, auto-imports, SSR, and the Nitro server engine for API endpoints.
+- **Vue 3** — Reactive UI framework. Uses Composition API with `<script setup>`, composables for shared logic, and reactive refs/computed for state.
+- **Nitro** — Nuxt's server engine. Powers all `/api/` routes with file-based routing (`index.get.ts`, `[id].put.ts`), middleware, and server plugins.
+- **Tailwind CSS** — Utility-first CSS framework via `@nuxtjs/tailwindcss`. All styling is done with utility classes in templates.
+- **PostgreSQL 16** — Primary database. Runs in Docker (Alpine). Stores all application data including users, posts, comments, documents, and events.
+- **Drizzle ORM** — Type-safe SQL query builder and schema definition. Schema in `server/db/schema.ts`, migrations generated with `drizzle-kit`.
+- **jose** — JWT signing and verification for auth tokens. Tokens stored in HTTP-only cookies with 45-day expiry.
+- **bcrypt** — Password hashing for user authentication.
+- **@simplewebauthn** — WebAuthn/passkey support (browser + server packages). Enables passwordless login via biometrics or hardware keys.
+- **marked** — Markdown-to-HTML rendering for board posts. Used in both the editor preview and post display.
+- **isomorphic-dompurify** — HTML sanitization to prevent XSS. Sanitizes rendered markdown before inserting via `v-html`.
+- **Nodemailer** — SMTP email sending for notifications (new posts, comments, calendar events, reminders, magic links).
+- **pg** — PostgreSQL client driver used by Drizzle ORM for database connections.
+- **Docker** — Multi-stage production build (Node 22 Alpine). Compose setup with app, PostgreSQL, and optional Cloudflare Tunnel.
 
 ## Project Structure
 

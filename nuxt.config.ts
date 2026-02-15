@@ -28,9 +28,13 @@ export default defineNuxtConfig({
     webauthnOrigin: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000',
     webhookUrl: process.env.WEBHOOK_URL || '',
     backupDir: process.env.BACKUP_DIR || './backups',
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '',
     public: {
       appName: process.env.APP_NAME || 'Samlet',
       smtpEnabled: false, // override at runtime via NUXT_PUBLIC_SMTP_ENABLED=true
+      turnstileSiteKey: process.env.TURNSTILE_SITE_KEY || '',
+      turnstileAppearance: process.env.TURNSTILE_APPEARANCE || 'always',
+      turnstileTheme: process.env.TURNSTILE_THEME || 'auto',
     },
   },
 })

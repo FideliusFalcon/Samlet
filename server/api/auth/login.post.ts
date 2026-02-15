@@ -11,6 +11,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'E-mail og adgangskode er påkrævet' })
   }
 
+  const ip = getHeader(event, 'x-forwarded-for')?.split(',')[0]?.trim()
+    || getHeader(event, 'x-real-ip')
+    || getRequestIP(event)
+    || undefined
+  await verifyTurnstile(body.turnstileToken, ip)
+
   const db = useDb()
 
   const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1)

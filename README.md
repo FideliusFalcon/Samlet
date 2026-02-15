@@ -92,6 +92,28 @@ Genstart appen bagefter:
 docker compose restart app
 ```
 
+### 6. Cloudflare Turnstile (valgfrit)
+
+Turnstile beskytter login-siden mod bots. Widgeten kræves ved login med adgangskode og magic link — passkey-login er ikke berørt.
+
+Opret en Turnstile-widget i [Cloudflare Dashboard](https://dash.cloudflare.com/?to=/:account/turnstile) med widget-typen "Managed", og tilføj dit domæne under allowed hostnames. Tilføj nøglerne i `.env`:
+
+```env
+TURNSTILE_SITE_KEY=din-site-key
+TURNSTILE_SECRET_KEY=din-secret-key
+```
+
+Hvis nøglerne ikke er sat, er Turnstile helt deaktiveret — login fungerer som normalt uden verifikation.
+
+Valgfri indstillinger:
+
+```env
+# Widget-udseende: always, execute, interaction-only (standard: interaction-only)
+TURNSTILE_APPEARANCE=interaction-only
+# Widget-tema: light, dark, auto (standard: auto)
+TURNSTILE_THEME=light
+```
+
 ## Miljøvariabler
 
 Se `.env.example` for alle tilgængelige variabler.

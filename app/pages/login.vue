@@ -31,6 +31,7 @@
               class="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
           </div>
+          <div v-if="turnstile.isEnabled.value" ref="turnstileContainer" />
           <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
           <button
             type="submit"
@@ -86,6 +87,7 @@
                 placeholder="din@email.dk"
               />
             </div>
+            <div v-if="turnstile.isEnabled.value" ref="turnstileContainer" />
             <p v-if="error" class="text-sm text-red-600">{{ error }}</p>
             <button
               type="submit"
@@ -131,6 +133,8 @@ definePageMeta({ layout: 'auth' })
 const { user, login, loginWithPasskey, requestMagicLink } = useAuth()
 const { appName, smtpEnabled } = useRuntimeConfig().public
 const route = useRoute()
+const turnstile = useTurnstile()
+const turnstileContainer = ref<HTMLElement | null>(null)
 
 const email = ref('')
 const password = ref('')
@@ -145,6 +149,31 @@ const magicLinkError = computed(() => {
   if (err === 'expired_link') return 'Login-linket er udløbet. Prøv igen.'
   if (err === 'invalid_link') return 'Login-linket er ugyldigt.'
   return ''
+})
+
+// Load Turnstile widget if enabled
+onMounted(async () => {
+  if (turnstile.isEnabled.value && turnstileContainer.value) {
+    try {
+      await turnstile.loadScript()
+      turnstile.renderWidget(turnstileContainer.value)
+    } catch {
+      // Turnstile script failed to load — login still works, server will reject if keys are set
+    }
+  }
+})
+
+// Re-render widget when switching between password/magic link mode
+watch(mode, async () => {
+  turnstile.cleanup()
+  await nextTick()
+  if (turnstile.isEnabled.value && turnstileContainer.value) {
+    turnstile.renderWidget(turnstileContainer.value)
+  }
+})
+
+onBeforeUnmount(() => {
+  turnstile.cleanup()
 })
 
 // Conditional UI: browser shows passkey in autofill when user focuses email input
@@ -179,7 +208,8 @@ async function handleLogin() {
   error.value = ''
   loading.value = true
   try {
-    await login(email.value, password.value)
+    const turnstileToken = await turnstile.getToken()
+    await login(email.value, password.value, turnstileToken)
   } catch (e: any) {
     error.value = e.data?.message || 'Login mislykkedes'
   } finally {
@@ -207,7 +237,8 @@ async function handleMagicLink() {
   error.value = ''
   loading.value = true
   try {
-    await requestMagicLink(magicLinkEmail.value)
+    const turnstileToken = await turnstile.getToken()
+    await requestMagicLink(magicLinkEmail.value, turnstileToken)
     magicLinkSent.value = true
   } catch (e: any) {
     error.value = e.data?.message || 'Kunne ikke sende login-link'

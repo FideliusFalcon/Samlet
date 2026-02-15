@@ -35,6 +35,8 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'E-mail er påkrævet' })
   }
 
+  await verifyTurnstile(body.turnstileToken, ip)
+
   const db = useDb()
 
   // Clean up expired tokens older than 1 hour

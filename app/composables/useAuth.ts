@@ -22,10 +22,10 @@ export function useAuth() {
     }
   }
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string, turnstileToken?: string | null) {
     const data = await $fetch<{ user: AuthUser }>('/api/auth/login', {
       method: 'POST',
-      body: { email, password },
+      body: { email, password, ...(turnstileToken && { turnstileToken }) },
     })
     user.value = data.user
     useState<boolean>('should-check-passkey-setup', () => false).value = true
@@ -44,10 +44,10 @@ export function useAuth() {
     await navigateTo(safeRedirect(useRoute().query.redirect))
   }
 
-  async function requestMagicLink(email: string) {
+  async function requestMagicLink(email: string, turnstileToken?: string | null) {
     await $fetch('/api/auth/magic-link', {
       method: 'POST',
-      body: { email },
+      body: { email, ...(turnstileToken && { turnstileToken }) },
     })
   }
 

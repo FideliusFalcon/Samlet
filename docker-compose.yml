@@ -19,6 +19,10 @@ services:
       - NUXT_WEBAUTHN_ORIGIN=${WEBAUTHN_ORIGIN:-http://localhost:3000}
       - NUXT_WEBHOOK_URL=${WEBHOOK_URL:-}
       - NUXT_BACKUP_DIR=/app/backups
+      - NUXT_TURNSTILE_SECRET_KEY=${TURNSTILE_SECRET_KEY:-}
+      - NUXT_PUBLIC_TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
+      - NUXT_PUBLIC_TURNSTILE_APPEARANCE=${TURNSTILE_APPEARANCE:-always}
+      - NUXT_PUBLIC_TURNSTILE_THEME=${TURNSTILE_THEME:-auto}
       - NODE_ENV=production
     volumes:
       - uploads:/app/uploads
