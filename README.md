@@ -62,6 +62,36 @@ SMTP_PASS=din-adgangskode
 SMTP_FROM=noreply@ditdomaene.dk
 ```
 
+### 5. Gendannelse fra backup
+
+Backups oprettes dagligt som gzippede `pg_dump`-filer i `backups`-volumen (f.eks. `samlet_20260215_0300.sql.gz`).
+
+Kopier backup-filen ud af volumen:
+
+```bash
+docker compose cp app:/app/backups/samlet_20260215_0300.sql.gz .
+```
+
+Gendan til databasen:
+
+```bash
+gunzip -c samlet_20260215_0300.sql.gz | docker compose exec -T db psql -U samlet -d samlet
+```
+
+Hvis databasen har eksisterende data, drop og genskab den først:
+
+```bash
+docker compose exec db psql -U samlet -d postgres -c "DROP DATABASE samlet;"
+docker compose exec db psql -U samlet -d postgres -c "CREATE DATABASE samlet OWNER samlet;"
+gunzip -c samlet_20260215_0300.sql.gz | docker compose exec -T db psql -U samlet -d samlet
+```
+
+Genstart appen bagefter:
+
+```bash
+docker compose restart app
+```
+
 ## Miljøvariabler
 
 Se `.env.example` for alle tilgængelige variabler.
